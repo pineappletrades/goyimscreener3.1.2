@@ -1,7 +1,7 @@
 name: Build Windows app
 
-# Builds "Goyim Screener.exe" from goyim-screener.zip in the main folder of this repo.
-# To update: upload a new goyim-screener.zip (replace the old one) and commit.
+# Builds "Goyim Screener.exe" from the .zip in the main folder of this repo (any name, keep only one zip).
+# To update: delete the old zip, upload the new one, and commit.
 # Download the app from: Actions tab -> latest run -> Artifacts -> Windows-app
 
 on:
@@ -24,8 +24,10 @@ jobs:
 
       - name: Unzip the app
         run: |
-          if (-not (Test-Path goyim-screener.zip)) { throw "goyim-screener.zip is not in the main folder of the repo" }
-          Expand-Archive goyim-screener.zip -DestinationPath src -Force
+          $zip = Get-ChildItem -Filter *.zip | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $zip) { throw "No .zip file in the main folder of the repo" }
+          Write-Host "Using $($zip.Name)"
+          Expand-Archive $zip.FullName -DestinationPath src -Force
           $root = Get-ChildItem src -Recurse -Filter requirements.txt | Select-Object -First 1
           if (-not $root) { throw "requirements.txt not found inside the zip" }
           "APPDIR=$($root.DirectoryName)" | Out-File $env:GITHUB_ENV -Append
